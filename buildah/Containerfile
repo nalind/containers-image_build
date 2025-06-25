@@ -90,9 +90,10 @@ RUN mkdir -p /var/lib/shared/overlay-images \
     touch /var/lib/shared/vfs-layers/layers.lock
 
 # Define uid/gid ranges for our user https://github.com/containers/buildah/issues/3053
+# It's assumed `build` will end up with UID/GID 1000
 RUN useradd build && \
-    echo -e "build:1:999\nbuild:1001:64535" > /etc/subuid && \
-    echo -e "build:1:999\nbuild:1001:64535" > /etc/subgid && \
+    echo -e "root:1:65535\nbuild:1:999\nbuild:1001:64535" > /etc/subuid && \
+    echo -e "root:1:65535\nbuild:1:999\nbuild:1001:64535" > /etc/subgid && \
     mkdir -p /home/build/.local/share/containers && \
     mkdir -p /home/build/.config/containers && \
     chown -R build:build /home/build

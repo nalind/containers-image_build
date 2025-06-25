@@ -61,9 +61,10 @@ RUN dnf -y update && \
     dnf clean all && \
     rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
+# It's assumed `skopeo` will end up with UID/GID 1000
 RUN useradd skopeo && \
-    echo skopeo:100000:65536 > /etc/subuid && \
-    echo skopeo:100000:65536 > /etc/subgid
+    echo -e "root:1:65535\nskopeo:1:999\nskopeo:1001:64535" > /etc/subuid && \
+    echo -e "root:1:65535\nskopeo:1:999\nskopeo:1001:64535" > /etc/subgid
 
 # Copy & modify the defaults to provide reference if runtime changes needed.
 # Changes here are required for running with fuse-overlay storage inside container.
