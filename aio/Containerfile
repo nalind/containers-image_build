@@ -18,9 +18,11 @@ FROM registry.fedoraproject.org/fedora-minimal:latest
 RUN echo -e "\n\n# Added during image build" >> /etc/dnf/dnf.conf && \
     echo -e "minrate=100\ntimeout=60\n" >> /etc/dnf/dnf.conf
 
+ARG INSTALL_RPMS="podman buildah skopeo fuse-overlayfs openssh-clients"
+
 RUN microdnf -y makecache && \
     microdnf -y update && \
-    microdnf -y install podman buildah skopeo fuse-overlayfs openssh-clients \
+    microdnf -y install $INSTALL_RPMS \
         --exclude "container-selinux,qemu-*" && \
     rpm --setcaps shadow-utils 2>/dev/null && \
     microdnf clean all && \

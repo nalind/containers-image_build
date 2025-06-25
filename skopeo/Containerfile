@@ -28,6 +28,8 @@ ARG FLAVOR=stable
 RUN echo -e "\n\n# Added during image build" >> /etc/dnf/dnf.conf && \
     echo -e "minrate=100\ntimeout=60\n" >> /etc/dnf/dnf.conf
 
+ARG INSTALL_RPMS="skopeo fuse-overlayfs"
+
 # Don't include container-selinux and remove
 # directories used by dnf that are just taking
 # up space.
@@ -38,16 +40,16 @@ RUN dnf -y update && \
     rpm --setcaps shadow-utils 2>/dev/null && \
     case "${FLAVOR}" in \
       stable) \
-        dnf -y install skopeo fuse-overlayfs --exclude container-selinux \
+        dnf -y install $INSTALL_RPMS --exclude container-selinux \
       ;; \
       testing) \
-        dnf -y install skopeo fuse-overlayfs --exclude container-selinux \
+        dnf -y install $INSTALL_RPMS --exclude container-selinux \
             --enablerepo updates-testing \
       ;; \
       upstream) \
         dnf -y install 'dnf-command(copr)' --enablerepo=updates-testing && \
         dnf -y copr enable rhcontainerbot/podman-next && \
-        dnf -y install skopeo fuse-overlayfs \
+        dnf -y install $INSTALL_RPMS \
             --exclude container-selinux \
             --enablerepo=updates-testing \
       ;; \
