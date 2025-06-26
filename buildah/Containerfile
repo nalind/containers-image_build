@@ -31,7 +31,7 @@ label "io.containers.capabilities"="CHOWN,DAC_OVERRIDE,FOWNER,FSETID,KILL,NET_BI
 RUN echo -e "\n\n# Added during image build" >> /etc/dnf/dnf.conf && \
     echo -e "minrate=100\ntimeout=60\n" >> /etc/dnf/dnf.conf
 
-ARG INSTALL_RPMS="buildah fuse-overlayfs ucpp"
+ARG INSTALL_RPMS="buildah fuse-overlayfs cpp git-core"
 
 # Don't include container-selinux and remove
 # directories used by dnf that are just taking
@@ -62,7 +62,6 @@ RUN dnf -y makecache && \
         exit 1 \
       ;; \
     esac && \
-    ln -s /usr/bin/ucpp /usr/local/bin/cpp && \
     dnf -y clean all && \
     rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
@@ -91,9 +90,10 @@ RUN mkdir -p /var/lib/shared/overlay-images \
     touch /var/lib/shared/vfs-layers/layers.lock
 
 # Define uid/gid ranges for our user https://github.com/containers/buildah/issues/3053
+# It's assumed `build` will end up with UID/GID 1000
 RUN useradd build && \
-    echo -e "build:1:999\nbuild:1001:64535" > /etc/subuid && \
-    echo -e "build:1:999\nbuild:1001:64535" > /etc/subgid && \
+    echo -e "root:1:65535\nbuild:1:999\nbuild:1001:64535" > /etc/subuid && \
+    echo -e "root:1:65535\nbuild:1:999\nbuild:1001:64535" > /etc/subgid && \
     mkdir -p /home/build/.local/share/containers && \
     mkdir -p /home/build/.config/containers && \
     chown -R build:build /home/build

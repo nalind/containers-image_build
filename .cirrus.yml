@@ -118,7 +118,7 @@ test_aio_image_build_task:
     alias: test_aio_image_build
     name: "Test build AIO image"
     only_if: *is_pr
-    skip: "!changesInclude('.cirrus.yml', 'ci/aio_build_push.sh', 'ci/tag_version.sh', 'aio/**/*')"
+    skip: "!changesInclude('.cirrus.yml', 'ci/aio_build_push.sh', 'ci/tag_version.sh', 'aio/*')"
     depends_on:
         - test_build-push
     gce_instance: *build_push
