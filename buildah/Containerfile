@@ -20,9 +20,12 @@
 #
 
 FROM registry.fedoraproject.org/fedora:latest
+
+ARG SOURCE_DATE_EPOCH
+
 ARG FLAVOR=stable
 
-label "io.containers.capabilities"="CHOWN,DAC_OVERRIDE,FOWNER,FSETID,KILL,NET_BIND_SERVICE,SETFCAP,SETGID,SETPCAP,SETUID,CHOWN,DAC_OVERRIDE,FOWNER,FSETID,KILL,NET_BIND_SERVICE,SETFCAP,SETGID,SETPCAP,SETUID,SYS_CHROOT"
+LABEL "io.containers.capabilities"="CHOWN,DAC_OVERRIDE,FOWNER,FSETID,KILL,NET_BIND_SERVICE,SETFCAP,SETGID,SETPCAP,SETUID,CHOWN,DAC_OVERRIDE,FOWNER,FSETID,KILL,NET_BIND_SERVICE,SETFCAP,SETGID,SETPCAP,SETUID,SYS_CHROOT"
 
 # When building for multiple-architectures in parallel using emulation
 # it's really easy for one/more dnf processes to timeout or mis-count
@@ -31,7 +34,7 @@ label "io.containers.capabilities"="CHOWN,DAC_OVERRIDE,FOWNER,FSETID,KILL,NET_BI
 RUN echo -e "\n\n# Added during image build" >> /etc/dnf/dnf.conf && \
     echo -e "minrate=100\ntimeout=60\n" >> /etc/dnf/dnf.conf
 
-ARG INSTALL_RPMS="buildah fuse-overlayfs cpp git-core"
+ARG INSTALL_RPMS="buildah fuse-overlayfs cpp git-core ${SOURCE_DATE_EPOCH:+sqlite}"
 
 # Don't include container-selinux and remove
 # directories used by dnf that are just taking
@@ -63,7 +66,12 @@ RUN dnf -y makecache && \
       ;; \
     esac && \
     dnf -y clean all && \
-    rm -rf /var/cache /var/log/dnf* /var/log/yum.*
+    if test -n "$SOURCE_DATE_EPOCH" ; then \
+        sqlite3 /usr/lib/sysimage/libdnf5/transaction_history.sqlite "UPDATE trans SET dt_begin=$SOURCE_DATE_EPOCH, dt_end=$SOURCE_DATE_EPOCH; PRAGMA journal_mode=DELETE; PRAGMA journal_mode=WAL" ; \
+    fi && \
+    rm -fv /etc/machine-id /var/lib/systemd/random-seed /var/lib/dnf/repos/*/countme && \
+    rm -rf /var/cache/*/* /var/log/dnf* /var/log/hawkey.log /var/log/yum.*
+
 
 ADD ./containers.conf /etc/containers/
 
