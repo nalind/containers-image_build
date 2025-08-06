@@ -19,6 +19,9 @@
 # https://bodhi.fedoraproject.org/updates/?search=skopeo
 
 FROM registry.fedoraproject.org/fedora:latest
+
+ARG SOURCE_DATE_EPOCH
+
 ARG FLAVOR=stable
 
 # When building for multiple-architectures in parallel using emulation
@@ -28,7 +31,7 @@ ARG FLAVOR=stable
 RUN echo -e "\n\n# Added during image build" >> /etc/dnf/dnf.conf && \
     echo -e "minrate=100\ntimeout=60\n" >> /etc/dnf/dnf.conf
 
-ARG INSTALL_RPMS="skopeo fuse-overlayfs"
+ARG INSTALL_RPMS="skopeo fuse-overlayfs ${SOURCE_DATE_EPOCH:+sqlite}"
 
 # Don't include container-selinux and remove
 # directories used by dnf that are just taking
@@ -59,6 +62,10 @@ RUN dnf -y update && \
       ;; \
     esac && \
     dnf clean all && \
+    if test -n "$SOURCE_DATE_EPOCH" ; then \
+        sqlite3 /usr/lib/sysimage/libdnf5/transaction_history.sqlite "UPDATE trans SET dt_begin=$SOURCE_DATE_EPOCH, dt_end=$SOURCE_DATE_EPOCH; PRAGMA journal_mode=DELETE; PRAGMA journal_mode=WAL" ; \
+    fi && \
+    rm -fv /etc/machine-id /var/lib/systemd/random-seed /var/lib/dnf/repos/*/countme && \
     rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
 # It's assumed `skopeo` will end up with UID/GID 1000
